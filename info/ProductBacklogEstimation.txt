@@ -1,0 +1,10 @@
+Obter Tabuleiro de Compras - 1h30
+Veri?ca Password de Cliente - 5h
+Procurar Pratos por tipo - 3h
+Login - 8h
+Obter Restaurantes - 5h
+Mostrar Menu de um Restaurante - 3h
+Adicionar Prato a Tabuleiro de Compras - 3h
+Mostrar Tabuleiro de Compras - 1h
+Alterar a Quantidade de um Prato do Tabuleiro de Compras - 3h
+Pagar Tabuleiro de Compras - 2h

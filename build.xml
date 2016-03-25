@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Rest" default="compile" basedir=".">
+  <description>Rest Build File</description>
+    
+        <!-- Read environment properties first -->
+        <property environment="env" />
+        <property name="gwt.sdk.home" value="${env.GWT_HOME}"/>
+        
+  <!-- **** Registo fatura **** -->
+  <property name="src.dir" location="src" />
+  <property name="build.dir" location="build" />
+  <property name="build.classes.dir" location="${build.dir}/classes" />
+  <property name="build.src.dir" location="${build.dir}/src" />
+  <property name="uddi.url" value="http://localhost:8081" />
+  <property name="ws.name" value="RegistoFatura" />
+  <property name="wsdl.file" value="${src.dir}/RegistoFatura.1_0.wsdl" />
+  <makeurl property="wsdl.url" file="${wsdl.file}" />
+  <!-- ************************ -->
+
+  <!-- **** ChequeRefeicao **** -->
+  <property name="ws.name2" value="ChequeRefeicao" />
+  <property name="wsdl.file2" value="${src.dir}/ChequeRefeicao.1_0.wsdl" />
+  <makeurl property="wsdl.url2" file="${wsdl.file2}" />
+  <!-- ************************ -->	
+	
+  <property name="ant.build.javac.source" value="1.6"/>
+  <property name="ant.build.javac.target" value="1.6"/>
+
+  <property name="javac.encoding" value="UTF-8"/>
+  <property name="java.file.encoding" value="UTF-8"/>
+  
+  <property name="src.rel-dir" value="src"/>
+  <property name="build.rel-dir" value="build"/>
+  <property name="lib.rel-dir" value="../lib"/>
+  
+  <property name="main.src.rel-dir" value="${src.rel-dir}/main"/>
+  <property name="test.src.rel-dir" value="${src.rel-dir}/test"/>
+
+  <property name="dml.filename" value="domain.dml"/>
+  
+  <property name="java.main.src.rel-dir" value="${main.src.rel-dir}/java"/>
+  <property name="java.test.src.rel-dir" value="${test.src.rel-dir}/java"/>
+  <property name="dml.src.rel-dir" value="${main.src.rel-dir}/dml"/>
+  <property name="generated-src.build.rel-dir" value="${build.rel-dir}/src"/>
+  <property name="classes.build.rel-dir" value="${build.rel-dir}/classes"/>
+  
+  <property name="dml.rel-file" value="${dml.src.rel-dir}/${dml.filename}"/>
+  
+  <property name="sql.driver" value="com.mysql.jdbc.Driver" />
+  <property name="sql.db" value="restdb" />
+  <property name="sql.url" value="jdbc:mysql://localhost:3306" />
+  <property name="sql.user" value="rest" />
+  <property name="sql.pass" value="r3st" />
+
+        <property name="gwt.war.rel-dir" value="war" />
+        <property name="gwt.war.classes.rel-dir" value="${gwt.war.rel-dir}/WEB-INF/classes" />
+        <property name="gwt.war.lib.rel-dir" value="${gwt.war.rel-dir}/WEB-INF/lib" />
+        <!-- Arguments to gwtc and devmode targets -->
+        <property name="gwt.args" value="" />
+
+
+
+  <path id="project.classpath">
+  	<pathelement location="${classes.build.rel-dir}" />
+  	<fileset dir="${lib.rel-dir}">
+  		<include name="**/*.jar" />
+  	</fileset>
+        <fileset dir="${gwt.sdk.home}">
+             <include name="**/*.jar" />
+        </fileset>
+  </path>
+  
+  <taskdef resource="dml-ant.xml" classpathref="project.classpath"/>
+  
+  <target name="prepare">
+    <echo message="Preparing the project for build..."/>
+    <mkdir dir="${classes.build.rel-dir}"/>
+  </target>
+  
+  <target name="generate-domain" depends="prepare">
+    <echo message="Generating base domain classes..." />
+    <echo message="Using: ${dml.rel-file}" />
+  	<dml-domain-generator destDirectory="${java.main.src.rel-dir}"
+  	                      destDirectoryBase="${generated-src.build.rel-dir}">
+  	  <fileset file="${dml.rel-file}"/>
+  	</dml-domain-generator>
+  </target>
+  
+  <target name="compile-domain" depends="generate-domain, prepare">
+    <echo message="Compiling sources..." />
+    <javac destdir="${classes.build.rel-dir}" debug="true" debuglevel="lines,vars,source"
+           optimize="true" deprecation="true" verbose="false" includeantruntime="false">
+      <classpath refid="project.classpath" />
+      <src>
+        <pathelement path="${generated-src.build.rel-dir}:${java.main.src.rel-dir}"/>
+      </src>
+      <compilerarg line=""/>
+    </javac> 
+  </target>
+  
+  <target name="instrument-classes" depends="compile-domain, compile-tests">
+    <echo message="Injecting FenixFramework Voodoo Magic..." />
+	<dml-post-processor dir="${classes.build.rel-dir}">
+	  <fileset file="${dml.rel-file}"/>
+	  <classpath refid="project.classpath" />
+	</dml-post-processor>
+  </target>
+
+  <target name="compile" depends="instrument-classes" description="Compiles the whole project"/>
+
+  <target name="run" depends="compile" description="Runs the program">
+    <java classname="pt.ist.rest.presentationserver.PresentationServer" fork="false">
+	  <classpath>
+	    <path refid="project.classpath" />
+	  </classpath>
+	</java>
+  </target>
+  
+  <target name="populate" depends="compile" description="Populates the program">
+    <java classname="pt.ist.rest.RestSetup" fork="false">
+	  <classpath>
+	    <path refid="project.classpath" />
+	  </classpath>
+	</java>
+  </target>
+  
+  <target name="clean" description="Cleans the compiled classes and generated sources">
+    <delete dir="${build.rel-dir}"/>
+    <delete dir="${gwt.war.classes.rel-dir}" />
+ </target>
+
+  <target name="compile-tests" depends="compile-domain" description="Compile the tests">
+    <javac destdir="${classes.build.rel-dir}" debug="true" verbose="false" 
+           debuglevel="lines,vars,source"
+           optimize="true" deprecation="true" includeantruntime="false" 
+           encoding="${javac.encoding}">
+      <classpath refid="project.classpath" />
+      <src>
+        <pathelement path="${java.test.src.rel-dir}"/>
+      </src>
+    </javac>
+  </target>
+
+  <target name="test" depends="compile" description="Run the tests">
+    <junit fork="yes" forkmode="once">
+      <classpath refid="project.classpath" />
+      <formatter type="brief" usefile="false" />
+      <test name="pt.ist.rest.service.TestEmptyShoppingTray" />
+    </junit>
+  </target>
+
+  <target name="clean-db" description="Recreated project's database">
+     <echo message="Creating SQL database '${sql.db}'" />
+     <sql driver="${sql.driver}" url="${sql.url}" userid="${sql.user}" password="${sql.pass}">
+        <classpath refid="project.classpath" />
+        DROP DATABASE IF EXISTS ${sql.db};
+     </sql>
+     <sql driver="${sql.driver}" url="${sql.url}" userid="${sql.user}" password="${sql.pass}">
+        <classpath refid="project.classpath" />
+        CREATE DATABASE IF NOT EXISTS ${sql.db};
+     </sql>
+  </target>
+
+
+        <target name="gwtc" depends="compile" 
+                    description="GWT compile to JavaScript (production mode)">
+                <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+                        <classpath>
+                                <pathelement location="${java.main.src.rel-dir}" />
+                                <path refid="project.classpath" />
+                        </classpath>
+                        <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+                        <jvmarg value="-Xmx256M" />
+                        <arg line="-war" />
+                        <arg value="${gwt.war.rel-dir}" />
+                        <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+                        <arg line="${gwt.args}" />
+                        <arg value="pt.ist.rest.RestGWT" />
+                </java>
+        </target>
+        
+        <target name="gwt-devmode" depends="compile" >
+                <echo message="Running GWT in devmode with URL='${startUpURL}'"/>
+                <mkdir dir="${gwt.war.classes.rel-dir}" />
+                <copy todir="${gwt.war.classes.rel-dir}">
+                  <fileset dir="${classes.build.rel-dir}" includes="**/*.class"/>
+                </copy>
+                <copy todir="${gwt.war.classes.rel-dir}">
+                  <fileset dir="${java.main.src.rel-dir}" excludes="**/*.java"/>
+                </copy>
+                <copy todir="${gwt.war.classes.rel-dir}" file="log4j.properties" />
+                <copy todir="${gwt.war.rel-dir}/src/main/dml" file="${dml.rel-file}" />
+                <copy todir="${gwt.war.classes.rel-dir}/src/main/dml" file="${dml.rel-file}" />
+                <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
+                  <classpath>
+                    <path refid="project.classpath"/>
+                        <pathelement location="${java.main.src.rel-dir}" />
+                  </classpath>
+                  <jvmarg value="-Xmx256M"/>
+                  <arg value="-startupUrl"/>
+                  <arg value="${startUpURL}"/>
+                  <arg line="-war"/>
+                  <arg value="${gwt.war.rel-dir}"/>
+                  <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+                  <arg line="${gwt.args}"/>
+                  <arg value="pt.ist.rest.RestGWT"/>
+                </java>
+        </target>
+        
+        <target name="devmode-local" 
+                    description="Runs GWT in development mode with local configuration">
+          <antcall target="gwt-devmode">
+            <param name="startUpURL" value="local.html"/>
+          </antcall>
+        </target>
+
+        <target name="devmode-remote"
+            description="Runs GWT in development mode with remote configuration">
+          <antcall target="gwt-devmode">
+            <param name="startUpURL" value="RestGWT.html"/>
+          </antcall>
+        </target>
+                
+        <target name="print-env-vars" description="Prints all environment variables" >
+                <propertyset id="environment"> 
+                        <propertyref prefix="env."/> 
+                </propertyset> 
+                <property name="env_prop" refid="environment"/>
+                <echo>${env_prop}</echo> 
+        </target>
+
+        
+	<!-- **** Registo fatura & Cheque Refeição**** -->
+	
+	<target name="init">
+    <!-- description="Create temporary work directories" -->
+        <mkdir dir="${build.dir}" />
+        <mkdir dir="${build.classes.dir}" />
+        <mkdir dir="${build.src.dir}" />
+    </target>
+	
+    <target name="-wsinit" depends="init">
+        <property name="wsdl.local.file" value="${build.src.dir}/${ws.name}.wsdl" />
+        <!-- check is wsimport completed successfully -->
+        <property name="wsimport.success.file" value="${build.dir}/${ws.name}.wsimport" />
+        <available property="wsimport.success" file="${wsimport.success.file}" />
+        <!-- wsimport should execute if it did not complete successfully -->
+        <condition property="wsimport.flag">
+            <not><isset property="wsimport.success" /></not>
+        </condition>
+    </target>
+
+    <target name="-wsinit2" depends="init">
+        <property name="wsdl.local2.file2" value="${build.src.dir}/${ws.name2}.wsdl" />
+        <!-- check is wsimport completed successfully -->
+        <property name="wsimport.success.file2" value="${build.dir}/${ws.name2}.wsimport" />
+        <available property="wsimport.success" file="${wsimport.success.file}" />
+        <!-- wsimport should execute if it did not complete successfully -->
+        <condition property="wsimport.flag">
+            <not><isset property="wsimport.success" /></not>
+        </condition>
+    </target>	
+	
+    <target name="wsimportRegistoFatura" depends="-wsinit" if="wsimport.flag"
+        description="Generate web service client" >
+        <!-- create local copy of WSDL -->
+        <get src="${wsdl.url}" dest="${wsdl.local.file}" maxtime="30" retries="1" />
+        <!-- generate web service classes using local WSDL -->
+        <makeurl property="wsdl.local.url" file="${wsdl.local.file}" />
+        <exec executable="wsimport" failonerror="true">
+            <!-- assumes that wsimport tool is available in PATH environment property -->
+            <arg value="-d" /><arg value="${build.classes.dir}"/>
+            <arg value="-s" /><arg value="${build.src.dir}" />
+            <arg value="${wsdl.local.url}" />
+        </exec>
+        <touch file="${wsimport.success.file}" />
+    </target>
+	
+	
+    <target name="wsimportChequeRefeicao" depends="-wsinit2" if="wsimport.flag"
+        description="Generate web service client" >
+        <!-- create local copy of WSDL -->
+        <get src="${wsdl.url2}" dest="${wsdl.local2.file2}" maxtime="30" retries="1" />
+        <!-- generate web service classes using local WSDL -->
+        <makeurl property="wsdl.local2.url2" file="${wsdl.local2.file2}" />
+        <exec executable="wsimport" failonerror="true">
+            <!-- assumes that wsimport tool is available in PATH environment property -->
+            <arg value="-d" /><arg value="${build.classes.dir}"/>
+            <arg value="-s" /><arg value="${build.src.dir}" />
+            <arg value="${wsdl.local2.url2}" />
+        </exec>
+        <touch file="${wsimport.success.file2}" />
+    </target>	
+	
+	<!-- ************************ -->    
+</project>

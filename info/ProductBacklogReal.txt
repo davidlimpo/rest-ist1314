@@ -1,0 +1,49 @@
+Obter Tabuleiro de Compras:
+	Autores: Rui Santos, Francisco Pedreira
+	Estimativa: 1h:30
+	Duração Real: 1h   
+
+Verifica Password de Cliente:
+	Autores: David Limpo, José Andrade
+	Estimativa: 5h
+	Duração Real: 30min
+	
+Procurar Pratos por tipo:
+	Autores: David Limpo, José Andrade
+	Estimativa: 3h
+	Duração Real: 30min
+
+Login:
+	Autores: Grupo
+	Estimativa: 8h
+	Duração Real: 11h
+ 
+Obter Restaurantes
+	Autores: David Limpo, Francisco Pedreira, Rui Santos
+	Estimativa: 5h
+	Duração Real: 1h
+	
+Mostrar Menu de um Restaurante
+	Autores: David Limpo, Francisco Pedreira, Rui Santos
+	Estimativa: 3h
+	Duração Real: 2h
+	
+Adicionar Prato a Tabuleiro de Compras
+	Autores: David Limpo, Francisco Pedreira, Rui Santos
+	Estimativa: 3h
+	Duração Real: 2h
+	
+Mostrar Tabuleiro de Compras
+	Autores: David Limpo, Francisco Pedreira, Rui Santos
+	Estimativa: 1h
+	Duração Real: 1h
+	
+Alterar a Quantidade de um Prato do Tabuleiro de Compras
+	Autores: David Limpo, Francisco Pedreira, Rui Santos
+	Estimativa: 3h
+	Duração Real: 2h
+	
+Pagar Tabuleiro de Compras
+	Autores: David Limpo, Francisco Pedreira, Rui Santos
+	Estimativa: 2h
+	Duração Real: 30min
